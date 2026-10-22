@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Books</title>
+</head>
+<body>
+    <h1>Search Books</h1>
+
+    <form action="{% url 'books:search' %}" method="get">
+        <input type="text" name="q" maxlength="100"
+               value="{{ query }}"
+               placeholder="Search by title or author">
+        <button type="submit">Search</button>
+    </form>
+
+    <p><a href="{% url 'books:list' %}">Back to all books</a></p>
+
+    {% if query %}
+        <h2>Results for "{{ query }}"</h2>
+
+        {% for book in books %}
+            <article>
+                <h3>{{ book.title }}</h3>
+                <p>Author: {{ book.author }}</p>
+                <p>Price: ₹{{ book.price }}</p>
+
+                {% if book.description %}
+                    <p>{{ book.description }}</p>
+                {% endif %}
+            </article>
+            <hr>
+        {% empty %}
+            <p>No books found matching your search.</p>
+        {% endfor %}
+
+        {% if books.has_previous %}
+            <a href="?q={{ query|urlencode }}&page={{ books.previous_page_number }}">
+                Previous
+            </a>
+        {% endif %}
+
+        <span>Page {{ books.number }} of {{ books.paginator.num_pages }}</span>
+
+        {% if books.has_next %}
+            <a href="?q={{ query|urlencode }}&page={{ books.next_page_number }}">
+                Next
+            </a>
+        {% endif %}
+    {% else %}
+        <p>Enter a title or author to search.</p>
+    {% endif %}
+</body>
+</html>
