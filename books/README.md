@@ -4,7 +4,7 @@
 
 The `books` module implements the book-related functionality of the Online Bookstore application.
 
-**Owner:** M2
+**Owner:** Rahul M S
 
 ## Functional Requirements
 
@@ -30,7 +30,7 @@ The `books` module implements the book-related functionality of the Online Books
 
 ## Integration Dependencies
 
-### Accounts Module — M1
+### Accounts Module — Pooja
 
 - Use the shared Django User model.
 - Use the agreed role field and role values.
