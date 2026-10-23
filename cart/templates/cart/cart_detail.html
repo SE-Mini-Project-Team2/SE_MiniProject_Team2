@@ -48,6 +48,11 @@
         </table>
 
         <h2>Total: ₹{{ total }}</h2>
+
+        <form method="post" action="{% url 'orders:place' %}">
+            {% csrf_token %}
+            <button type="submit">Place Order</button>
+        </form>
     {% else %}
         <p>Your shopping cart is empty.</p>
     {% endif %}
