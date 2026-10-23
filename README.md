@@ -210,17 +210,25 @@ All four documents are maintained as **Version 1.1 Final** and are synchronized 
 
 ## 12. Setup Instructions
 
-Setup and execution instructions will be added as the Django application and its dependencies are configured.
+The initial Django project and Accounts module are configured for local development with SQLite.
 
-The expected development environment will include:
+From the repository root in PowerShell:
 
-- Python
-- Django
-- SQLite
-- Git
-- A supported web browser
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
 
-Detailed installation, configuration and execution commands will be documented once the implementation structure is established.
+Run the authentication tests with:
+
+```powershell
+python manage.py test accounts
+```
+
+The local development secret and debug settings have safe development defaults. Set `DJANGO_SECRET_KEY` and `DJANGO_DEBUG=False` and configure allowed hosts before deploying; the default settings are not a production deployment configuration.
 
 ## 13. Project Structure
 
@@ -237,6 +245,7 @@ Online-Bookstore/
 │   └── Security & Integration Plan
 │
 ├── accounts/
+├── config/
 ├── books/
 ├── cart/
 ├── orders/

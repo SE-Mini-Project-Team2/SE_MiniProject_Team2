@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Log in | Online Bookstore</title>
+  </head>
+  <body>
+    <main>
+      <h1>Log in</h1>
+      {% for message in messages %}
+        <p>{{ message }}</p>
+      {% endfor %}
+      <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+          <p>
+            {{ field.label_tag }}
+            {{ field }}
+            {{ field.errors }}
+          </p>
+        {% endfor %}
+        {% if next %}
+          <input type="hidden" name="next" value="{{ next }}">
+        {% endif %}
+        <button type="submit">Log in</button>
+      </form>
+      <p><a href="{% url 'accounts:register' %}">Create an account</a></p>
+    </main>
+  </body>
+</html>

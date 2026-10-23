@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Create an account | Online Bookstore</title>
+  </head>
+  <body>
+    <main>
+      <h1>Create an account</h1>
+      {% for message in messages %}
+        <p>{{ message }}</p>
+      {% endfor %}
+      <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+          <p>
+            {{ field.label_tag }}
+            {{ field }}
+            {{ field.errors }}
+          </p>
+        {% endfor %}
+        <button type="submit">Register</button>
+      </form>
+      <p><a href="{% url 'accounts:login' %}">Already registered? Log in</a></p>
+    </main>
+  </body>
+</html>

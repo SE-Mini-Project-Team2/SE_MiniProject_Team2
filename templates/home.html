@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Online Bookstore</title>
+  </head>
+  <body>
+    <main>
+      <h1>Online Bookstore</h1>
+      {% for message in messages %}
+        <p>{{ message }}</p>
+      {% endfor %}
+      {% if user.is_authenticated %}
+        <p>Signed in as {{ user.name }} ({{ user.get_role_display }}).</p>
+        <form method="post" action="{% url 'accounts:logout' %}">
+          {% csrf_token %}
+          <button type="submit">Log out</button>
+        </form>
+      {% else %}
+        <p><a href="{% url 'accounts:login' %}">Log in</a></p>
+        <p><a href="{% url 'accounts:register' %}">Create an account</a></p>
+      {% endif %}
+    </main>
+  </body>
+</html>
