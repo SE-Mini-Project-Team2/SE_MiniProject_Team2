@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.sqlite3.backup
+*.sqlite3.legacy
+.venv/
+.env
+.env.*
+!.env.example

@@ -1,0 +1,57 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Shopping Cart</title>
+</head>
+<body>
+    <h1>My Shopping Cart</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    {% if items %}
+        <table border="1" cellpadding="8">
+            <thead>
+                <tr>
+                    <th>Book</th>
+                    <th>Author</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Subtotal</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                    <tr>
+                        <td>{{ item.book.title }}</td>
+                        <td>{{ item.book.author }}</td>
+                        <td>₹{{ item.book.price }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>₹{{ item.line_total }}</td>
+                        <td>
+                            <form method="post"
+                                  action="{% url 'cart:remove_from_cart' item.id %}">
+                                {% csrf_token %}
+                                <button type="submit">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>Total: ₹{{ total }}</h2>
+    {% else %}
+        <p>Your shopping cart is empty.</p>
+    {% endif %}
+
+    <p><a href="/admin/">Open Admin</a></p>
+</body>
+</html>
