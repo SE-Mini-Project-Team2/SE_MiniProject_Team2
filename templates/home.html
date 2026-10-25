@@ -13,6 +13,7 @@
       {% endfor %}
       {% if user.is_authenticated %}
         <p>Signed in as {{ user.name }} ({{ user.get_role_display }}).</p>
+        <p><a href="{% url 'orders:history' %}">My orders</a></p>
         <form method="post" action="{% url 'accounts:logout' %}">
           {% csrf_token %}
           <button type="submit">Log out</button>

@@ -34,4 +34,4 @@ class CartItem(models.Model):
         return self.book.price * self.quantity
 
     def __str__(self):
-        return f"{self.customer.username} - {self.book.title}"
+        return f"{self.customer.email} - {self.book.title}"
