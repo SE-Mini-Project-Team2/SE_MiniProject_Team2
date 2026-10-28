@@ -1,27 +1,93 @@
+
 <!doctype html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Online Bookstore</title>
-  </head>
-  <body>
+</head>
+<body>
     <main>
-      <h1>Online Bookstore</h1>
-      {% for message in messages %}
-        <p>{{ message }}</p>
-      {% endfor %}
-      {% if user.is_authenticated %}
-        <p>Signed in as {{ user.name }} ({{ user.get_role_display }}).</p>
-        <p><a href="{% url 'orders:history' %}">My orders</a></p>
-        <form method="post" action="{% url 'accounts:logout' %}">
-          {% csrf_token %}
-          <button type="submit">Log out</button>
-        </form>
-      {% else %}
-        <p><a href="{% url 'accounts:login' %}">Log in</a></p>
-        <p><a href="{% url 'accounts:register' %}">Create an account</a></p>
-      {% endif %}
+        <h1>Online Bookstore</h1>
+
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+
+        <nav aria-label="Main navigation">
+            <h2>Explore Books</h2>
+
+            <p>
+                <a href="{% url 'books:list' %}">
+                    Browse Books
+                </a>
+            </p>
+
+            <form action="{% url 'books:search' %}" method="get">
+                <label for="book-search">
+                    Search books by title or author:
+                </label>
+
+                <input
+                    id="book-search"
+                    type="text"
+                    name="q"
+                    maxlength="100"
+                    placeholder="Enter book title or author"
+                    required
+                >
+
+                <button type="submit">Search Books</button>
+            </form>
+        </nav>
+
+        {% if user.is_authenticated %}
+
+            <hr>
+
+            <p>
+                Signed in as {{ user.name }}
+                ({{ user.get_role_display }}).
+            </p>
+
+            {% if user.role == "SELLER" %}
+                <h2>Seller Options</h2>
+
+                <p>
+                    <a href="{% url 'books:add' %}">
+                        Add a Book Listing
+                    </a>
+                </p>
+            {% endif %}
+
+            <p>
+                <a href="{% url 'orders:history' %}">
+                    My Orders
+                </a>
+            </p>
+
+            <form method="post" action="{% url 'accounts:logout' %}">
+                {% csrf_token %}
+                <button type="submit">Log Out</button>
+            </form>
+
+        {% else %}
+
+            <hr>
+
+            <p>
+                <a href="{% url 'accounts:login' %}">
+                    Log In
+                </a>
+            </p>
+
+            <p>
+                <a href="{% url 'accounts:register' %}">
+                    Create an Account
+                </a>
+            </p>
+
+        {% endif %}
     </main>
-  </body>
+</body>
 </html>

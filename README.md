@@ -47,10 +47,15 @@ The application follows a **layered modular monolith** architecture with separat
 
 ### Book Management
 
-- Browse available books
-- Search books by title or author
-- Seller book-listing creation
-- Record the Seller who created each listing
+- Browse available books from the homepage or book listing page.
+- Search books by title or author.
+- Display matching results and handle searches with no results.
+- Allow authenticated sellers to create book listings.
+- Provide sellers with direct access to book creation from the search page.
+- Prefill the book title from the search query when creating a listing.
+- Restrict book-listing creation to sellers using server-side role checks.
+- Save new book listings in the database.
+- Associate each listing with the seller who created it.
 
 ### Shopping Cart
 
@@ -66,6 +71,20 @@ The application follows a **layered modular monolith** architecture with separat
 - Calculate order totals using server-side book prices
 - View previously placed orders
 - Maintain order and cart consistency using database transactions
+
+## Homepage Navigation
+
+The homepage provides navigation to the main bookstore features.
+
+- **Browse Books:** Opens the book listing page.
+- **Search Books:** Allows users to search by title or author.
+- **Add a Book Listing:** Available to authenticated sellers only.
+- **My Orders:** Provides access to the user's order history.
+- **Log In / Register:** Available to users who are not authenticated.
+
+Sellers can also start creating a book listing directly from the search page. When a seller chooses to add a book from a search query, the title can be prefilled in the listing form.
+
+Server-side role checks remain responsible for preventing customers from creating book listings.
 
 ### Security
 
@@ -219,6 +238,7 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 python manage.py migrate
+python manage.py seed_demo_data # for creating the dataset on user side for now 
 python manage.py runserver
 ```
 

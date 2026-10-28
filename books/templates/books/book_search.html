@@ -8,12 +8,29 @@
 <body>
     <h1>Search Books</h1>
 
+    
     <form action="{% url 'books:search' %}" method="get">
         <input type="text" name="q" maxlength="100"
-               value="{{ query }}"
-               placeholder="Search by title or author">
+        value="{{ query }}"
+        placeholder="Search by title or author">
         <button type="submit">Search</button>
     </form>
+    
+    {% if user.is_authenticated and user.role == "SELLER" %}
+        <p>
+            <a href="{% url 'books:add' %}">Add a Book</a>
+        </p>
+    {% endif %}
+    
+    
+    {% if user.is_authenticated and user.role == "SELLER" %}
+        <p>
+            <a href="{% url 'books:add' %}?title={{ query|urlencode }}">
+                Add "{{ query }}" as a new book
+            </a>
+        </p>
+    {% endif %}
+
 
     <p><a href="{% url 'books:list' %}">Back to all books</a></p>
 
