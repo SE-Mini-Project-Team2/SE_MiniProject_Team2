@@ -8,6 +8,11 @@
 </head>
 <body>
     <h1>Available Books</h1>
+    {% if user.is_authenticated and user.role == "SELLER" %}
+        <p>
+            <a href="{% url 'books:add' %}">Add a Book</a>
+        </p>
+    {% endif %}
 
     {% if messages %}
         {% for message in messages %}
