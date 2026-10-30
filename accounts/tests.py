@@ -1,8 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.sessions.models import Session
-from django.test import Client, RequestFactory, TestCase
+from django.core.cache import cache
+from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
+from unittest import mock
 
 from .decorators import role_required
 from .models import UserRole
@@ -323,3 +325,120 @@ class RoleRequiredTests(TestCase):
         response = protected_view(request)
 
         self.assertEqual(response.status_code, 403)
+
+
+LOCKOUT_MESSAGE = "Too many failed login attempts. Please try again later."
+
+
+@override_settings(LOGIN_FAILURE_LIMIT=5, LOGIN_LOCKOUT_SECONDS=900)
+class LoginThrottlingTests(TestCase):
+    """SEC-CTRL-16: five consecutive failures lock the email/IP pair."""
+
+    password = "A-secure-unique-password-42"
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(
+            email="throttle@example.com",
+            password=self.password,
+            name="Throttle Target",
+            role=UserRole.CUSTOMER,
+        )
+
+    def tearDown(self):
+        cache.clear()
+
+    def _login(self, email, password, client=None):
+        return (client or self.client).post(
+            reverse("accounts:login"),
+            {"email": email, "password": password},
+        )
+
+    def _fail(self, times, email=None):
+        for _ in range(times):
+            response = self._login(email or self.user.email, "wrong-password")
+            self.assertEqual(response.status_code, 200)
+            self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_sec_ctrl_16_sixth_attempt_after_five_failures_is_locked_out(self):
+        self._fail(5)
+
+        # Sixth attempt uses the CORRECT password and must still be refused.
+        response = self._login(self.user.email, self.password)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("_auth_user_id", self.client.session)
+        self.assertIn(LOCKOUT_MESSAGE, response.context["form"].non_field_errors())
+
+    def test_sec_ctrl_16_four_failures_do_not_lock_out(self):
+        self._fail(4)
+
+        response = self._login(self.user.email, self.password)
+
+        self.assertRedirects(response, reverse("home"))
+        self.assertEqual(int(self.client.session["_auth_user_id"]), self.user.pk)
+
+    def test_sec_ctrl_16_successful_login_resets_failure_count(self):
+        self._fail(4)
+        self.assertRedirects(self._login(self.user.email, self.password), reverse("home"))
+        self.client.post(reverse("accounts:logout"))
+
+        # Without the reset this would be failure 8 and lock the account.
+        self._fail(4)
+        response = self._login(self.user.email, self.password)
+
+        self.assertRedirects(response, reverse("home"))
+
+    def test_sec_ctrl_16_lockout_message_does_not_reveal_unknown_email(self):
+        self._fail(5, email="nobody@example.com")
+        unknown = self._login("nobody@example.com", "anything")
+
+        self._fail(5)
+        known = self._login(self.user.email, "anything")
+
+        self.assertEqual(
+            unknown.context["form"].non_field_errors(),
+            known.context["form"].non_field_errors(),
+        )
+        self.assertIn(LOCKOUT_MESSAGE, unknown.context["form"].non_field_errors())
+
+    def test_sec_ctrl_16_lockout_does_not_block_other_accounts(self):
+        other = User.objects.create_user(
+            email="other@example.com",
+            password=self.password,
+            role=UserRole.CUSTOMER,
+        )
+        self._fail(5)
+
+        response = self._login(other.email, self.password)
+
+        self.assertRedirects(response, reverse("home"))
+
+    def test_sec_ctrl_16_lockout_ignores_email_case(self):
+        self._fail(5, email="THROTTLE@Example.com")
+
+        response = self._login(self.user.email, self.password)
+
+        self.assertIn(LOCKOUT_MESSAGE, response.context["form"].non_field_errors())
+
+    def test_sec_ctrl_16_lockout_expires_after_lockout_window(self):
+        import time as real_time
+
+        from django.core.cache import caches
+
+        if "locmem" not in type(caches["default"]).__module__:
+            self.skipTest("fakes the clock of the local-memory cache backend")
+
+        self._fail(5)
+        self.assertIn(
+            LOCKOUT_MESSAGE,
+            self._login(self.user.email, self.password).context["form"].non_field_errors(),
+        )
+
+        future = real_time.time() + 901
+        with mock.patch("django.core.cache.backends.locmem.time") as fake_time:
+            fake_time.time.return_value = future
+            response = self._login(self.user.email, self.password)
+
+        self.assertRedirects(response, reverse("home"))
+

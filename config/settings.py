@@ -1,15 +1,44 @@
 import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY",
-    "development-only-key-change-before-deployment",
+
+def env_bool(name, default):
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def env_list(name, default):
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+# Local development works with no environment variables set. A hosted
+# deployment sets DJANGO_DEBUG=false and must then supply its own secret key
+# and host names (SEC-CTRL-17).
+DEBUG = env_bool("DJANGO_DEBUG", True)
+
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "")
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured(
+            "DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is false "
+            "(SEC-CTRL-17: secrets come from environment variables)."
+        )
+    SECRET_KEY = "development-only-key-change-before-deployment"
+
+ALLOWED_HOSTS = env_list(
+    "DJANGO_ALLOWED_HOSTS",
+    ["localhost", "127.0.0.1", "[::1]"],
 )
-DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() == "true"
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -101,3 +130,36 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "home"
+
+# SEC-CTRL-16: temporary lockout after repeated failed logins
+# (see accounts/throttling.py).
+LOGIN_FAILURE_LIMIT = 5
+LOGIN_LOCKOUT_SECONDS = 15 * 60
+
+
+# SEC-CTRL-17: hosted-environment hardening. Every value below switches on
+# automatically when DEBUG is false and stays off for local HTTP development.
+# Verify with:
+#   DJANGO_DEBUG=false DJANGO_SECRET_KEY=<key> python manage.py check --deploy
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_SSL_REDIRECT = env_bool("DJANGO_SECURE_SSL_REDIRECT", not DEBUG)
+# Start with one hour; raise to 31536000 (one year) once HTTPS is confirmed
+# working on the real domain, because browsers remember this value.
+SECURE_HSTS_SECONDS = int(
+    os.environ.get("DJANGO_SECURE_HSTS_SECONDS", "0" if DEBUG else "3600")
+)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
+
+# Hosts such as Render or Railway terminate HTTPS before Django. Set this so
+# SECURE_SSL_REDIRECT does not loop. Only enable it behind such a proxy.
+if env_bool("DJANGO_BEHIND_TLS_PROXY", False):
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# security.W021 asks for SECURE_HSTS_PRELOAD. Joining the browser preload
+# list is hard to undo and is a per-domain decision, so it stays off.
+SILENCED_SYSTEM_CHECKS = ["security.W021"]
