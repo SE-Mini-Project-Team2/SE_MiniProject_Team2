@@ -8,21 +8,15 @@
 <body>
     <h1>Search Books</h1>
 
-    
-    <form action="{% url 'books:search' %}" method="get">
-        <input type="text" name="q" maxlength="100"
-        value="{{ query }}"
-        placeholder="Search by title or author">
-        <button type="submit">Search</button>
-    </form>
-    
+    {% include "includes/messages.html" %}
+    {% include "includes/navigation.html" %}
+
     {% if user.is_authenticated and user.role == "SELLER" %}
         <p>
             <a href="{% url 'books:add' %}">Add a Book</a>
         </p>
     {% endif %}
-    
-    
+
     {% if user.is_authenticated and user.role == "SELLER" %}
         <p>
             <a href="{% url 'books:add' %}?title={{ query|urlencode }}">
@@ -31,10 +25,7 @@
         </p>
     {% endif %}
 
-
-    <p><a href="{% url 'books:list' %}">Back to all books</a></p>
-
-    {% if query %}
+    {% if query and not search_error %}
         <h2>Results for "{{ query }}"</h2>
 
         {% for book in books %}
@@ -46,10 +37,26 @@
                 {% if book.description %}
                     <p>{{ book.description }}</p>
                 {% endif %}
+
+                {% if user.is_authenticated and user.role == "CUSTOMER" %}
+                    <form method="post"
+                          action="{% url 'cart:add_to_cart' book.id %}">
+                        {% csrf_token %}
+                        <button type="submit">Add to Cart</button>
+                    </form>
+                {% elif not user.is_authenticated %}
+                    <p>
+                        <a href="{% url 'accounts:login' %}">
+                            Log in to add books to your cart
+                        </a>
+                    </p>
+                {% endif %}
             </article>
             <hr>
         {% empty %}
-            <p>No books found matching your search.</p>
+            <p class="message info" role="status">
+                No books found matching your search.
+            </p>
         {% endfor %}
 
         {% if books.has_previous %}
@@ -65,7 +72,7 @@
                 Next
             </a>
         {% endif %}
-    {% else %}
+    {% elif not search_error %}
         <p>Enter a title or author to search.</p>
     {% endif %}
 </body>

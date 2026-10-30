@@ -8,9 +8,8 @@
   <body>
     <main>
       <h1>Create an account</h1>
-      {% for message in messages %}
-        <p>{{ message }}</p>
-      {% endfor %}
+      {% include "includes/messages.html" %}
+      {% include "includes/navigation.html" %}
       <form method="post">
         {% csrf_token %}
         {{ form.non_field_errors }}

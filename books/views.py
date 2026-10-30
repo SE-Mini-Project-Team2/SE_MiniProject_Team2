@@ -2,7 +2,6 @@
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render
 
 from accounts.decorators import role_required
@@ -35,8 +34,22 @@ def book_search(request):
     query = request.GET.get("q", "").strip()
 
     if len(query) > MAX_SEARCH_LENGTH:
-        return HttpResponseBadRequest(
-            "Search text must not exceed 100 characters."
+        messages.error(
+            request,
+            "Search text must not exceed 100 characters.",
+        )
+        return render(
+            request,
+            "books/book_search.html",
+            {
+                "books": Paginator(
+                    Book.objects.none(),
+                    BOOKS_PER_PAGE,
+                ).get_page(1),
+                "query": query,
+                "search_error": True,
+            },
+            status=400,
         )
 
     results = Book.objects.none()
@@ -51,6 +64,17 @@ def book_search(request):
         results,
         BOOKS_PER_PAGE,
     ).get_page(request.GET.get("page"))
+
+    if query and books.paginator.count:
+        result_count = books.paginator.count
+        messages.success(
+            request,
+            (
+                f"{result_count} book found."
+                if result_count == 1
+                else f"{result_count} books found."
+            ),
+        )
 
     return render(
         request,
@@ -82,6 +106,10 @@ def add_book(request):
             )
 
             return redirect("books:list")
+        messages.error(
+            request,
+            "Please correct the errors below to add this book.",
+        )
 
     else:
         # Prefill the title from a search query, if provided.
@@ -91,8 +119,15 @@ def add_book(request):
 
         if title:
             if len(title) > MAX_SEARCH_LENGTH:
-                return HttpResponseBadRequest(
-                    "Book title must not exceed 100 characters."
+                messages.error(
+                    request,
+                    "Book title must not exceed 100 characters.",
+                )
+                return render(
+                    request,
+                    "books/book_form.html",
+                    {"form": BookForm()},
+                    status=400,
                 )
 
             initial_data["title"] = title

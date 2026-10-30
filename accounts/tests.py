@@ -1,5 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.messages.storage.fallback import FallbackStorage
+from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.sessions.models import Session
 from django.test import Client, RequestFactory, TestCase
 from django.urls import reverse
@@ -319,6 +321,11 @@ class RoleRequiredTests(TestCase):
 
         request = self.factory.get("/books/add/")
         request.user = self.user
+        SessionMiddleware(lambda current_request: None).process_request(
+            request
+        )
+        request.session.save()
+        request._messages = FallbackStorage(request)
 
         response = protected_view(request)
 

@@ -1,9 +1,9 @@
 from functools import wraps
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.views import redirect_to_login
-from django.http import HttpResponseForbidden
-from django.shortcuts import resolve_url
+from django.shortcuts import render, resolve_url
 
 
 def role_required(role):
@@ -16,7 +16,15 @@ def role_required(role):
                     resolve_url(settings.LOGIN_URL),
                 )
             if request.user.role != role:
-                return HttpResponseForbidden()
+                messages.error(
+                    request,
+                    "You do not have permission to access this page.",
+                )
+                return render(
+                    request,
+                    "accounts/forbidden.html",
+                    status=403,
+                )
             return view_func(request, *args, **kwargs)
 
         return wrapped_view
