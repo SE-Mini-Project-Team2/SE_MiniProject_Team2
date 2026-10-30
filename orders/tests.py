@@ -8,7 +8,7 @@ from accounts.models import User, UserRole
 from books.models import Book
 from cart.models import CartItem
 
-from .models import Order
+from .models import Order, OrderItem
 from .services import EmptyCartError, place_order
 
 
@@ -98,6 +98,7 @@ class PlaceOrderServiceTests(TestCase):
             place_order(self.customer)
 
         self.assertEqual(Order.objects.count(), 0)
+        self.assertEqual(OrderItem.objects.count(), 0)
         self.assertEqual(
             CartItem.objects.filter(customer=self.customer).count(),
             1,
