@@ -1,8 +1,9 @@
-
+from datetime import timedelta
 from decimal import Decimal
 from unittest.mock import patch
 
 from django.test import TestCase, Client
+from django.utils import timezone
 
 from accounts.models import User, UserRole
 from books.models import Book
@@ -47,6 +48,7 @@ class PlaceOrderServiceTests(TestCase):
             Decimal("499.00"),
         )
         self.assertEqual(order.total, Decimal("998.00"))
+        self.assertEqual(order.status, "Placed")
         self.assertEqual(
             CartItem.objects.filter(customer=self.customer).count(),
             0,
@@ -157,20 +159,72 @@ class OrderViewTests(TestCase):
             quantity=1,
         )
 
-        response = self.client.post("/orders/place/")
-
-        self.assertEqual(response.status_code, 302)
+        place_response = self.client.post("/orders/place/")
+        self.assertEqual(place_response.status_code, 302)
         self.assertEqual(Order.objects.count(), 1)
 
-        history_response = self.client.get("/orders/")
+        response = self.client.get("/orders/")
+        self.assertEqual(response.status_code, 200)
+        order = Order.objects.get(customer=self.customer)
 
-        self.assertEqual(history_response.status_code, 200)
-        self.assertContains(history_response, "Dune")
+        self.assertContains(response, f"Order #{order.pk}")
+        self.assertContains(
+            response,
+            order.created_at.strftime("%d %b %Y %H:%M"),
+        )
+        self.assertContains(response, "Status: Placed")
+        self.assertContains(response, "Dune")
+        self.assertContains(response, str(order.total))
         self.assertEqual(
             CartItem.objects.filter(customer=self.customer).count(),
             0,
         )
 
+    def test_order_history_displays_newest_orders_first(self):
+        later_order_book = Book.objects.create(
+            title="Later Order Book", author="Test Author",
+            price=Decimal("100.00"), seller=self.seller,
+        )
+        CartItem.objects.create(customer=self.customer, book=self.book, quantity=1)
+        earlier_order = place_order(self.customer)
+        CartItem.objects.create(
+            customer=self.customer, book=later_order_book, quantity=1,
+        )
+        place_order(self.customer)
+        Order.objects.filter(pk=earlier_order.pk).update(
+            created_at=timezone.now() - timedelta(days=1),
+        )
+
+        self.client.force_login(self.customer)
+        response = self.client.get("/orders/")
+
+        self.assertLess(
+            response.content.index(b"Later Order Book"),
+            response.content.index(b"Dune"),
+        )
+
+    def test_empty_order_history_displays_message(self):
+        self.client.force_login(self.customer)
+
+        response = self.client.get("/orders/")
+
+        self.assertContains(response, "You have not placed any orders yet.")
+
+    def test_sec_ctrl_05_anonymous_cannot_view_order_history(self):
+        response = self.client.get("/orders/")
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/login/", response["Location"])
+
+    def test_sec_ctrl_06_seller_cannot_view_order_history(self):
+        self.client.force_login(self.seller)
+
+        response = self.client.get("/orders/")
+
+        self.assertEqual(response.status_code, 403)
+
+    # TC-15 assumes an order-detail route; the current design only exposes
+    # this customer-scoped history list.
     def test_sec_ctrl_08_customer_only_sees_own_orders(self):
         other = User.objects.create_user(
             email="other@test.com",
