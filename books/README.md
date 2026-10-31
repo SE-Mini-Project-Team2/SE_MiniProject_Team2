@@ -1,34 +1,152 @@
 # Books Module
 
-## Overview
+## 1. Overview
 
-The `books` module implements the book-related functionality of the Online Bookstore application.
+The `books` module implements book browsing, searching, and seller listing creation for the Online Bookstore application.
 
 **Owner:** Rahul M S
 
-## Functional Requirements
+## 2. Functional Requirements
 
-- **FR-BOOK-01 — Browse Books:** Allow anonymous visitors, customers, and sellers to browse available books.
-- **FR-BOOK-02 — Search Books:** Support case-insensitive partial searches by book title or author.
-- **FR-BOOK-03 — Add Book Listing:** Allow authenticated sellers to create book listings.
+| ID         | Requirement      | Description                                                                 |
+| ---------- | ---------------- | --------------------------------------------------------------------------- |
+| FR-BOOK-01 | Browse Books     | Allow anonymous visitors, customers, and sellers to browse available books. |
+| FR-BOOK-02 | Search Books     | Support case-insensitive partial searches by book title or author.          |
+| FR-BOOK-03 | Add Book Listing | Allow authenticated sellers to create book listings.                        |
 
-## File Responsibilities
+## 3. File Responsibilities
 
-| File | Responsibility |
-|---|---|
-| `apps.py` | Django application configuration |
-| `models.py` | Book model and seller relationship |
-| `forms.py` | Validation for book listing creation |
-| `views.py` | Browse, search, and add-book request handling |
-| `urls.py` | URL routes for book functionality |
-| `admin.py` | Register the Book model in Django admin |
-| `tests.py` | Tests for browsing, searching, validation, and access control |
-| `migrations/` | Database migration files |
-| `templates/books/book_list.html` | Book browsing page |
-| `templates/books/book_search.html` | Search results page |
-| `templates/books/book_form.html` | Seller listing creation page |
+| File or Directory                              | Responsibility                                                |
+| ---------------------------------------------- | ------------------------------------------------------------- |
+| `apps.py`                                      | Django application configuration                              |
+| `models.py`                                    | Book model and seller relationship                            |
+| `forms.py`                                     | Validation for book listing creation                          |
+| `views.py`                                     | Browse, search, and add-book request handling                 |
+| `urls.py`                                      | URL routes for book functionality                             |
+| `admin.py`                                     | Register the Book model in Django admin                       |
+| `tests.py`                                     | Tests for browsing, searching, validation, and access control |
+| `migrations/`                                  | Database migration files                                      |
+| `templates/books/book_list.html`               | Book browsing page                                            |
+| `templates/books/book_search.html`             | Search results page                                           |
+| `templates/books/book_form.html`               | Seller listing creation page                                  |
+| `management/commands/seed_performance_data.py` | Generate synthetic books for performance testing              |
+| `locustfile.py` (project root)                 | Simulate concurrent book-search requests during load testing  |
 
-## Integration Dependencies
+## 4. Implemented Features
+
+### 4.1 Browse Books
+
+- Displays available book listings on the browsing page.
+- Supports pagination where configured.
+- Allows users to navigate to the book listing page from the homepage.
+- Uses Django's ORM to retrieve book records.
+
+### 4.2 Search Books
+
+- Searches book titles and authors using case-insensitive partial matching.
+- Displays matching book listings.
+- Handles searches with no matching results.
+- Supports pagination where configured.
+- Limits the search query length to 100 characters.
+- Allows users to access search from the homepage and book pages.
+
+### 4.3 Seller Book Listings
+
+- Allows authenticated sellers to access the add-book form.
+- Provides a seller-only option to add a listing from the homepage.
+- Provides sellers with a direct option to start creating a listing from the search page.
+- Supports pre-filling the book title from a search query.
+- Associates a newly created listing with the authenticated seller on the server side.
+- Saves book listings through Django's ORM.
+- Restricts listing creation to sellers through server-side role checks.
+
+Customers can browse and search books but must not be allowed to create listings, including by accessing the add-book URL directly.
+
+### 4.4 Homepage Navigation
+
+The homepage provides navigation to the main bookstore features.
+
+- **Browse Books:** Opens the book listing page.
+- **Search Books:** Searches for books by title or author.
+- **Add a Book Listing:** Available to authenticated sellers only.
+- **My Orders:** Provides access to order history.
+- **Log In / Register:** Provides account access to unauthenticated visitors.
+
+## 5. Book Routes
+
+| Route                      | Purpose                   | Access                     |
+| -------------------------- | ------------------------- | -------------------------- |
+| `/books/`                  | Browse available books    | Public                     |
+| `/books/search/?q=<query>` | Search by title or author | Public                     |
+| `/books/add/`              | Create a book listing     | Authenticated sellers only |
+
+The add-book form accepts a `title` query parameter to prefill the title field when a seller starts a listing from a search query.
+
+## 6. Non-Functional Requirement: NFR-01
+
+### Objective
+
+Ensure book search results are displayed within three seconds under normal operating conditions.
+
+### Acceptance Criteria
+
+- Search results display within three seconds under normal operating conditions.
+- The test environment supports a catalogue of up to 10,000 listings.
+- The test environment supports up to 50 concurrent users.
+- Test results and performance issues are documented.
+
+### Test Environment
+
+| Parameter             | Configuration                   |
+| --------------------- | ------------------------------- |
+| Application framework | Django                          |
+| Database              | SQLite                          |
+| Server                | Local Django development server |
+| Load-testing tool     | Locust                          |
+| Synthetic catalogue   | 10,000 book listings            |
+| Concurrent users      | 50                              |
+
+### Observed Load-Test Results
+
+The following results were recorded in the Locust statistics after a test with 50 concurrent users.
+
+| Metric                         |      Observed Result |
+| ------------------------------ | -------------------: |
+| Total requests                 |                2,939 |
+| Failed requests                |                    0 |
+| Throughput                     | 23.3 requests/second |
+| Median response time           |                26 ms |
+| 95th-percentile response time  |                67 ms |
+| 99th-percentile response time  |               120 ms |
+| Maximum observed response time |               478 ms |
+
+#### Results by Search Type
+
+| Search Type            | 95th-Percentile Response Time | Maximum Response Time |
+| ---------------------- | ----------------------------: | --------------------: |
+| Author search          |                         71 ms |                412 ms |
+| Common title search    |                         75 ms |                478 ms |
+| Search with no results |                         51 ms |                 86 ms |
+| Specific title search  |                         58 ms |                435 ms |
+
+### Performance Assessment
+
+All observed search response times were below the three-second target during the recorded test. No failed requests were reported.
+
+The measured results provide preliminary evidence that the search implementation meets the response-time target in the tested local environment.
+
+These measurements are specific to the local SQLite and Django development-server configuration. They do not establish production performance or guarantee the same results on different hardware or deployment configurations.
+
+No search-query optimization has been justified by these measurements so far.
+
+### Performance Test Files
+
+- `books/management/commands/seed_performance_data.py` — generates synthetic book listings for testing.
+- `locustfile.py` — defines the book-search load-test scenarios.
+
+The synthetic dataset is intended for performance testing and should not be treated as production catalogue data.
+
+## 7. Integration Dependencies
 
 ### Accounts Module — Pooja
 
@@ -45,46 +163,54 @@ The `books` module implements the book-related functionality of the Online Books
 
 ### Shared UI
 
-The templates currently provide basic functional HTML. They are not the final shared UI design.
+The templates currently provide basic functional HTML and navigation. They are not the final shared UI design.
 
 When the team establishes the shared base template, navigation, and message-display conventions, these templates should be updated to follow them.
 
-## Current Implementation Notes
+## 8. Scope Boundaries
 
-- The Books module provides book browsing, searching, and seller listing creation.
-- The homepage and book pages provide navigation to the browsing and search features.
-- Search supports case-insensitive partial matches against book titles and authors.
-- Search results handle empty queries and searches with no matching books.
-- Authenticated sellers can access the book-listing form.
-- The search page provides sellers with a direct option to start a new listing.
-- When a seller starts a listing from a search query, the book title can be prefilled.
-- The seller is associated with the listing on the server side.
-- Book listings are saved through Django's ORM.
-- Customers must not be able to create listings, even by accessing the add-book URL directly.
-- Templates use the shared Accounts implementation for authentication and role checks.
-- Tests should verify browsing, searching, seller listing creation, customer restrictions, and database persistence.
+This module covers:
 
-## Book Routes
+- Book browsing
+- Book searching
+- Seller book listing creation
+- Book-related access control
+- Book-search performance testing
 
-| Route | Purpose | Access |
-|---|---|---|
-| `/books/` | Browse available books | Public |
-| `/books/search/?q=<query>` | Search by title or author | Public |
-| `/books/add/` | Create a book listing | Authenticated sellers only |
+It does not implement cart operations, order processing, payment processing, or other functionality assigned to separate modules.
 
-The add-book form can accept a title through the `title` query parameter to prefill the title field when starting a listing from a search.
+## 9. Development and Testing Commands
 
-## Verification Checklist
+Run the following commands from the directory containing `manage.py`.
 
-- [ ] Books appear on the listing page.
-- [ ] Search returns matching books.
-- [ ] Searches with no matches display an appropriate message.
-- [ ] Sellers can access the add-book form.
-- [ ] The search query can prefill the new listing's title.
-- [ ] Customers cannot create book listings.
-- [ ] Successfully submitted listings remain saved in the database.
-- [ ] The newly created book appears in the listing.
+Check the Django configuration:
 
-## Scope Boundaries
+```bash
+python manage.py check
+```
 
-This module covers book browsing, searching, and seller listing creation. It does not implement cart operations, order processing, payment processing, or other functionality assigned to separate modules.
+Run the Books module tests:
+
+```bash
+python manage.py test books
+```
+
+Generate the default performance dataset:
+
+```bash
+python manage.py seed_performance_data
+```
+
+Start the Django development server:
+
+```bash
+python manage.py runserver
+```
+
+Run the Locust load test:
+
+```bash
+python -m locust -f locustfile.py --host http://127.0.0.1:8000
+```
+
+The performance-data command should only be used in an appropriate development or test environment. Review its cleanup behavior before rerunning it, and never use synthetic-data cleanup against production records.
