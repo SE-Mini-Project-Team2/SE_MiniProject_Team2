@@ -8,6 +8,9 @@
 <body>
     <h1>Add a Book Listing</h1>
 
+    {% include "includes/messages.html" %}
+    {% include "includes/navigation.html" %}
+
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}

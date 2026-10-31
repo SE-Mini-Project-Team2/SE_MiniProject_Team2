@@ -9,11 +9,8 @@
 <body>
     <h1>My Orders</h1>
 
-    {% if messages %}
-        {% for message in messages %}
-            <p>{{ message }}</p>
-        {% endfor %}
-    {% endif %}
+    {% include "includes/messages.html" %}
+    {% include "includes/navigation.html" %}
 
     {% if orders %}
         {% for order in orders %}

@@ -25,6 +25,10 @@ def register(request):
                 "Your account was created. You can now log in.",
             )
             return redirect("accounts:login")
+        messages.error(
+            request,
+            "Please correct the errors below to create your account.",
+        )
     else:
         form = RegistrationForm()
 
@@ -34,6 +38,17 @@ def register(request):
 class EmailLoginView(LoginView):
     authentication_form = EmailAuthenticationForm
     template_name = "accounts/login.html"
+
+    def form_valid(self, form):
+        messages.success(self.request, "You have been logged in.")
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(
+            self.request,
+            "Unable to log in. Check your email and password and try again.",
+        )
+        return super().form_invalid(form)
 
 
 @login_required
