@@ -19,6 +19,7 @@
         {% for order in orders %}
             <article>
                 <h2>Order #{{ order.pk }} - {{ order.created_at|date:"d M Y H:i" }}</h2>
+                <p>Status: {{ order.status }}</p>
                 <table border="1" cellpadding="8">
                     <thead>
                         <tr>
