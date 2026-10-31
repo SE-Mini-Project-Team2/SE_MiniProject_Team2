@@ -91,6 +91,48 @@ DATABASES = {
     }
 }
 
+# SEC-CTRL-18: security events (failed logins, lockouts, denied access, failed
+# orders) go to the "security" logger. Set DJANGO_SECURITY_LOG_FILE to also
+# write them to a file. See accounts/security_log.py for what is never logged.
+_security_handlers = ["console"]
+_log_handlers = {
+    "console": {
+        "class": "logging.StreamHandler",
+        "formatter": "security",
+        "filters": ["redact_secrets"],
+    },
+}
+if os.environ.get("DJANGO_SECURITY_LOG_FILE"):
+    _log_handlers["file"] = {
+        "class": "logging.FileHandler",
+        "filename": os.environ["DJANGO_SECURITY_LOG_FILE"],
+        "formatter": "security",
+        "filters": ["redact_secrets"],
+    }
+    _security_handlers.append("file")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "security": {
+            "()": "accounts.security_log.UTCFormatter",
+            "format": "%(asctime)s %(levelname)s %(name)s %(message)s",
+        },
+    },
+    "filters": {
+        "redact_secrets": {"()": "accounts.security_log.RedactSecretsFilter"},
+    },
+    "handlers": _log_handlers,
+    "loggers": {
+        "security": {
+            "handlers": _security_handlers,
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
+
 AUTH_USER_MODEL = "accounts.User"
 AUTH_PASSWORD_VALIDATORS = [
     {
