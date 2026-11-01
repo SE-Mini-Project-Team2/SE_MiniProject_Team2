@@ -3,6 +3,7 @@ from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
 from accounts.decorators import role_required
+from accounts.security_log import log_event
 
 from .models import Order
 from .services import EmptyCartError, place_order
@@ -14,8 +15,18 @@ def place_order_view(request):
     try:
         order = place_order(request.user)
     except EmptyCartError:
+        log_event("order_failed", request=request, reason="empty_cart")
         messages.error(request, "Your cart is empty.")
         return redirect("cart:view_cart")
+    except Exception as error:
+        # Log the exception type only: its message may contain data.
+        log_event(
+            "order_failed",
+            request=request,
+            reason="error",
+            error=type(error).__name__,
+        )
+        raise
 
     messages.success(request, f"Order #{order.pk} placed successfully.")
     return redirect("orders:history")

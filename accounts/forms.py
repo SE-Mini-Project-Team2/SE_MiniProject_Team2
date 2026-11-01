@@ -6,6 +6,7 @@ from django.contrib.auth.forms import (
 )
 
 from .models import User, UserRole
+from .security_log import email_reference, log_event
 from .throttling import (
     client_ip,
     is_locked_out,
@@ -66,6 +67,13 @@ class EmailAuthenticationForm(AuthenticationForm):
             # SEC-CTRL-16: refuse before checking the password, so a locked
             # pair cannot keep testing guesses.
             if is_locked_out(email, ip):
+                known = User.objects.filter(email__iexact=email).only("pk").first()
+                log_event(
+                    "login_locked_out",
+                    request=self.request,
+                    user_id=known.pk if known else "unknown",
+                    email_ref=email_reference(email),
+                )
                 raise forms.ValidationError(
                     self.error_messages["locked_out"],
                     code="locked_out",
