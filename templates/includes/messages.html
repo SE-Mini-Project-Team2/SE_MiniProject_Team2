@@ -1,6 +1,10 @@
+{% if messages %}
+<div class="messages">
 {% for message in messages %}
     <p class="message {{ message.tags }}"
        {% if 'error' in message.tags %}role="alert"{% else %}role="status"{% endif %}>
         {{ message }}
     </p>
 {% endfor %}
+</div>
+{% endif %}

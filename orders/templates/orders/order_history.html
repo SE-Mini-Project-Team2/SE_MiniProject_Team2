@@ -1,48 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Order History{% endblock %}
+{% block content %}
+<div class="page-head"><h1>My Orders</h1></div>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Order History</title>
-</head>
-<body>
-    <h1>My Orders</h1>
-
-    {% include "includes/messages.html" %}
-    {% include "includes/navigation.html" %}
-
-    {% if orders %}
-        {% for order in orders %}
-            <article>
+{% if orders %}
+    <div class="order-list">
+    {% for order in orders %}
+        <article class="order">
+            <header class="order-head">
                 <h2>Order #{{ order.pk }} - {{ order.created_at|date:"d M Y H:i" }}</h2>
-                <p>Status: {{ order.status }}</p>
-                <table border="1" cellpadding="8">
+                <p class="badge">Status: {{ order.status }}</p>
+            </header>
+            <div class="table-wrap">
+                <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Book</th>
-                            <th>Quantity</th>
-                            <th>Unit Price</th>
-                            <th>Subtotal</th>
+                            <th scope="col">Book</th>
+                            <th scope="col" class="num">Quantity</th>
+                            <th scope="col" class="num">Unit Price</th>
+                            <th scope="col" class="num">Subtotal</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for item in order.items.all %}
                             <tr>
-                                <td>{{ item.book.title }}</td>
-                                <td>{{ item.quantity }}</td>
-                                <td>₹{{ item.unit_price }}</td>
-                                <td>₹{{ item.subtotal }}</td>
+                                <td data-label="Book" class="strong">{{ item.book.title }}</td>
+                                <td data-label="Quantity" class="num">{{ item.quantity }}</td>
+                                <td data-label="Unit Price" class="num">₹{{ item.unit_price }}</td>
+                                <td data-label="Subtotal" class="num">₹{{ item.subtotal }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-                <p><strong>Total: ₹{{ order.total }}</strong></p>
-            </article>
-            <hr>
-        {% endfor %}
-    {% else %}
-        <p>You have not placed any orders yet.</p>
-    {% endif %}
-</body>
-</html>
+            </div>
+            <p class="order-total"><strong>Total: ₹{{ order.total }}</strong></p>
+        </article>
+    {% endfor %}
+    </div>
+{% else %}
+    <p class="empty">You have not placed any orders yet.</p>
+{% endif %}
+{% endblock %}

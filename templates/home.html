@@ -1,21 +1,40 @@
-
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Online Bookstore</title>
-</head>
-<body>
-    <main>
+{% extends "base.html" %}
+{% block title %}Online Bookstore{% endblock %}
+{% block body_class %}home{% endblock %}
+{% block content %}
+<section class="hero">
+    <div class="hero-copy">
         <h1>Online Bookstore</h1>
-
-        {% include "includes/messages.html" %}
-        {% include "includes/navigation.html" %}
-
+        <p class="lead">Search for a book by title or author, add it to your cart and place your order in a few steps. Sellers list their own books.</p>
         {% if user.is_authenticated %}
-            <p>Signed in as {{ user.name }} ({{ user.get_role_display }}).</p>
+            <p class="signed-in">Signed in as {{ user.name }} ({{ user.get_role_display }}).</p>
         {% endif %}
-    </main>
-</body>
-</html>
+        <div class="hero-actions">
+            <a class="btn" href="{% url 'books:list' %}">Browse Books</a>
+            {% if not user.is_authenticated %}
+                <a class="btn btn-light" href="{% url 'accounts:register' %}">Create an Account</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="shelf" aria-hidden="true">
+        <i class="spine s1"></i><i class="spine s2"></i><i class="spine s3"></i>
+        <i class="spine s4"></i><i class="spine s5"></i><i class="spine s6"></i>
+        <i class="spine s7"></i>
+    </div>
+</section>
+
+<section class="steps">
+    <div class="step">
+        <h2>Find a book</h2>
+        <p>Search by title or author, or browse everything that is available.</p>
+    </div>
+    <div class="step">
+        <h2>Order in a few steps</h2>
+        <p>Add books to your cart, check the total, then place the order.</p>
+    </div>
+    <div class="step">
+        <h2>Sell your own</h2>
+        <p>Seller accounts can list books and set the price.</p>
+    </div>
+</section>
+{% endblock %}

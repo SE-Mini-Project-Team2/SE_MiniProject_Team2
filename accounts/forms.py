@@ -54,6 +54,7 @@ class EmailAuthenticationForm(AuthenticationForm):
 
         super().__init__(request, *args, **kwargs)
         self.fields.pop("username")
+        self.order_fields(["email", "password"])
 
     def clean(self):
         cleaned_data = self.cleaned_data

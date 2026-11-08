@@ -1,22 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add a Book</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}Add a Book{% endblock %}
+{% block content %}
+<section class="auth-card wide">
     <h1>Add a Book Listing</h1>
-
-    {% include "includes/messages.html" %}
-    {% include "includes/navigation.html" %}
-
-    <form method="post">
+    <form method="post" class="form">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Add Book</button>
+        {% for field in form %}
+            <div class="field">
+                {{ field.label_tag }}
+                {{ field }}
+                {{ field.errors }}
+            </div>
+        {% endfor %}
+        {{ form.non_field_errors }}
+        <div class="form-actions">
+            <button type="submit">Add Book</button>
+            <a class="btn btn-quiet" href="{% url 'books:list' %}">Cancel</a>
+        </div>
     </form>
-
-    <p><a href="{% url 'books:list' %}">Cancel</a></p>
-</body>
-</html>
+</section>
+{% endblock %}
