@@ -114,7 +114,7 @@ STP test-case mappings supplied by contributors are recorded as reported. Where 
 | PR | #33 |
 | Execution status in original contribution | Final Orders and full-suite rerun marked NOT RUN pending corrected-implementation verification |
 | Later evidence | M4 report lists four order-history tests as executed and passed; authorship remains with the original contributor. |
-| Known issue | TC-15 is reported to expect an individual order-detail endpoint. Current implementation reportedly has an order-history list but no separate individual order-detail endpoint. Team must clarify whether this endpoint is required by the approved SRS/STP. |
+| Resolution (TC-15) | Resolved. The approved STP defines TC-15 as "Customer attempts to access another customer's order history" with the expected result that access is denied and private order data is not disclosed. It does not require an individual order-detail endpoint. The order-history list is the only order-viewing route and is scoped to the logged-in customer (SEC-CTRL-08), so another customer's orders cannot be requested or seen. Verified by `test_sec_ctrl_08_customer_only_sees_own_orders` (PASS) and the IT-05 integration test (PASS). No order-detail endpoint is implemented; none is required. |
 
 ### 5.4 Navigation and Feedback — NFR-02 contribution (PR #35)
 

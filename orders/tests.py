@@ -223,8 +223,8 @@ class OrderViewTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-    # TC-15 assumes an order-detail route; the current design only exposes
-    # this customer-scoped history list.
+    # TC-15: another customer's orders must not be disclosed. History is the
+    # only order view and is scoped to the logged-in customer.
     def test_sec_ctrl_08_customer_only_sees_own_orders(self):
         other = User.objects.create_user(
             email="other@test.com",
