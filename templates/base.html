@@ -17,6 +17,17 @@
         {% include "includes/messages.html" %}
         {% block content %}{% endblock %}
     </main>
+    {% if user.is_authenticated and user.role == "CUSTOMER" %}
+    <dialog id="confirm-add" class="confirm-dialog" aria-labelledby="confirm-add-title">
+        <h2 id="confirm-add-title">Add this book to your cart?</h2>
+        <p id="confirm-add-book" class="confirm-book"></p>
+        <div class="confirm-actions">
+            <button type="button" id="confirm-add-yes">Add to Cart</button>
+            <button type="button" id="confirm-add-no" class="btn-quiet">Discard</button>
+        </div>
+    </dialog>
+    <script src="{% static 'js/confirm-add.js' %}" defer></script>
+    {% endif %}
     <footer class="site-footer">
         <div class="container">Online Bookstore &middot; a Software Engineering mini project</div>
     </footer>
