@@ -1,79 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Books</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}Search Books{% endblock %}
+{% block content %}
+<div class="page-head">
     <h1>Search Books</h1>
-
-    {% include "includes/messages.html" %}
-    {% include "includes/navigation.html" %}
-
     {% if user.is_authenticated and user.role == "SELLER" %}
-        <p>
-            <a href="{% url 'books:add' %}">Add a Book</a>
-        </p>
+        <div class="head-actions">
+            <a class="btn btn-quiet" href="{% url 'books:add' %}">Add a Book</a>
+            <a class="btn" href="{% url 'books:add' %}?title={{ query|urlencode }}">Add "{{ query }}" as a new book</a>
+        </div>
     {% endif %}
+</div>
 
-    {% if user.is_authenticated and user.role == "SELLER" %}
-        <p>
-            <a href="{% url 'books:add' %}?title={{ query|urlencode }}">
-                Add "{{ query }}" as a new book
-            </a>
-        </p>
-    {% endif %}
+{% if query and not search_error %}
+    <h2 class="results-title">Results for "{{ query }}"</h2>
 
-    {% if query and not search_error %}
-        <h2>Results for "{{ query }}"</h2>
-
+    <div class="book-grid">
         {% for book in books %}
-            <article>
-                <h3>{{ book.title }}</h3>
-                <p>Author: {{ book.author }}</p>
-                <p>Price: ₹{{ book.price }}</p>
-
-                {% if book.description %}
-                    <p>{{ book.description }}</p>
-                {% endif %}
-
-                {% if user.is_authenticated and user.role == "CUSTOMER" %}
-                    <form method="post"
-                          action="{% url 'cart:add_to_cart' book.id %}">
-                        {% csrf_token %}
-                        <button type="submit">Add to Cart</button>
-                    </form>
-                {% elif not user.is_authenticated %}
-                    <p>
-                        <a href="{% url 'accounts:login' %}">
-                            Log in to add books to your cart
-                        </a>
-                    </p>
-                {% endif %}
-            </article>
-            <hr>
+            {% include "books/_book_card.html" %}
         {% empty %}
-            <p class="message info" role="status">
-                No books found matching your search.
-            </p>
+            <p class="message info" role="status">No books found matching your search.</p>
         {% endfor %}
+    </div>
 
+    <nav class="pager" aria-label="Pagination">
         {% if books.has_previous %}
-            <a href="?q={{ query|urlencode }}&page={{ books.previous_page_number }}">
-                Previous
-            </a>
+            <a href="?q={{ query|urlencode }}&page={{ books.previous_page_number }}">Previous</a>
         {% endif %}
-
         <span>Page {{ books.number }} of {{ books.paginator.num_pages }}</span>
-
         {% if books.has_next %}
-            <a href="?q={{ query|urlencode }}&page={{ books.next_page_number }}">
-                Next
-            </a>
+            <a href="?q={{ query|urlencode }}&page={{ books.next_page_number }}">Next</a>
         {% endif %}
-    {% elif not search_error %}
-        <p>Enter a title or author to search.</p>
-    {% endif %}
-</body>
-</html>
+    </nav>
+{% elif not search_error %}
+    <p class="empty">Enter a title or author to search.</p>
+{% endif %}
+{% endblock %}

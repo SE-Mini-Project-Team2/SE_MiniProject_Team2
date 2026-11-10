@@ -1,0 +1,22 @@
+{% load ui %}
+<article class="book">
+    <div class="cover tone-{{ book.pk|tone }}" aria-hidden="true"><span>{{ book.title|first|upper }}</span></div>
+    <div class="book-body">
+        <h2>{{ book.title }}</h2>
+        <p class="author">Author: {{ book.author }}</p>
+        {% if book.description %}
+            <p class="desc">{{ book.description }}</p>
+        {% endif %}
+        <div class="book-foot">
+            <p class="price">Price: ₹{{ book.price }}</p>
+            {% if user.is_authenticated and user.role == "CUSTOMER" %}
+                <form method="post" action="{% url 'cart:add_to_cart' book.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Add to Cart</button>
+                </form>
+            {% elif not user.is_authenticated %}
+                <a class="login-hint" href="{% url 'accounts:login' %}">Log in to add books to your cart</a>
+            {% endif %}
+        </div>
+    </div>
+</article>

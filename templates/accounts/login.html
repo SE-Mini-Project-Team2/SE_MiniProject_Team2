@@ -1,31 +1,23 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Log in | Online Bookstore</title>
-  </head>
-  <body>
-    <main>
-      <h1>Log in</h1>
-      {% include "includes/messages.html" %}
-      {% include "includes/navigation.html" %}
-      <form method="post">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
-        {% for field in form %}
-          <p>
-            {{ field.label_tag }}
-            {{ field }}
-            {{ field.errors }}
-          </p>
-        {% endfor %}
-        {% if next %}
-          <input type="hidden" name="next" value="{{ next }}">
-        {% endif %}
-        <button type="submit">Log in</button>
-      </form>
-      <p><a href="{% url 'accounts:register' %}">Create an account</a></p>
-    </main>
-  </body>
-</html>
+{% extends "base.html" %}
+{% block title %}Log in | Online Bookstore{% endblock %}
+{% block content %}
+<section class="auth-card">
+  <h1>Log in</h1>
+  <form method="post" class="form">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <div class="field">
+        {{ field.label_tag }}
+        {{ field }}
+        {{ field.errors }}
+      </div>
+    {% endfor %}
+    {% if next %}
+      <input type="hidden" name="next" value="{{ next }}">
+    {% endif %}
+    <button type="submit">Log in</button>
+  </form>
+  <p class="alt"><a href="{% url 'accounts:register' %}">Create an account</a></p>
+</section>
+{% endblock %}
