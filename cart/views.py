@@ -1,10 +1,32 @@
 
+from urllib.parse import urlsplit
+
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from accounts.decorators import role_required
 from books.models import Book
 from .models import CartItem
+
+
+def _page_before_request(request):
+    """Return a same-site path for the page the customer came from.
+
+    Used so adding a book keeps the customer on Browse Books or Search.
+    An external or missing referrer falls back to the cart page.
+    """
+    referer = request.META.get("HTTP_REFERER", "")
+    if referer and url_has_allowed_host_and_scheme(
+        referer,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        parts = urlsplit(referer)
+        path = parts.path or "/"
+        return f"{path}?{parts.query}" if parts.query else path
+    return reverse("cart:view_cart")
 
 
 @role_required("CUSTOMER")
@@ -53,7 +75,7 @@ def add_to_cart(request, book_id):
         )
         messages.success(request, "Book added to your cart.")
 
-    return redirect("cart:view_cart")
+    return redirect(_page_before_request(request))
 
 
 @role_required("CUSTOMER")
