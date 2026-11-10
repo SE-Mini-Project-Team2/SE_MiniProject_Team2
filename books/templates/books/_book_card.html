@@ -10,7 +10,8 @@
         <div class="book-foot">
             <p class="price">Price: ₹{{ book.price }}</p>
             {% if user.is_authenticated and user.role == "CUSTOMER" %}
-                <form method="post" action="{% url 'cart:add_to_cart' book.id %}">
+                <form method="post" action="{% url 'cart:add_to_cart' book.id %}"
+                      data-confirm-add data-book-title="{{ book.title }}">
                     {% csrf_token %}
                     <button type="submit">Add to Cart</button>
                 </form>
