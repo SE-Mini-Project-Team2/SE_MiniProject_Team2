@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}My Listings{% endblock %}
+{% block content %}
+<div class="page-head">
+    <h1>My Listings</h1>
+    <a class="btn" href="{% url 'books:add' %}">Add a Book</a>
+</div>
+
+{% if listings %}
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th scope="col">Book</th>
+                    <th scope="col">Author</th>
+                    <th scope="col" class="num">Price</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Date of purchase</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for book in listings %}
+                    <tr>
+                        <td data-label="Book" class="strong">{{ book.title }}</td>
+                        <td data-label="Author">{{ book.author }}</td>
+                        <td data-label="Price" class="num">₹{{ book.price }}</td>
+                        <td data-label="Status">
+                            {% if book.sold_at %}
+                                <span class="badge badge-sold">Sold</span>
+                            {% else %}
+                                <span class="badge">Available</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Date of purchase">
+                            {% if book.sold_at %}{{ book.sold_at|date:"d M Y H:i" }}{% else %}-{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <p class="empty">You have not listed any books yet. <a href="{% url 'books:add' %}">Add a Book</a></p>
+{% endif %}
+{% endblock %}

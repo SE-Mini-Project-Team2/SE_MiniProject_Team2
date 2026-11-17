@@ -6,7 +6,7 @@ from accounts.decorators import role_required
 from accounts.security_log import log_event
 
 from .models import Order
-from .services import EmptyCartError, place_order
+from .services import BookSoldError, EmptyCartError, place_order
 
 
 @role_required("CUSTOMER")
@@ -17,6 +17,15 @@ def place_order_view(request):
     except EmptyCartError:
         log_event("order_failed", request=request, reason="empty_cart")
         messages.error(request, "Your cart is empty.")
+        return redirect("cart:view_cart")
+    except BookSoldError as error:
+        log_event("order_failed", request=request, reason="book_sold")
+        messages.error(
+            request,
+            "Sorry, already sold to another customer: "
+            + ", ".join(error.titles)
+            + ". Remove it from your cart to place the rest of your order.",
+        )
         return redirect("cart:view_cart")
     except Exception as error:
         # Log the exception type only: its message may contain data.

@@ -17,7 +17,7 @@ def book_list(request):
     """Display a paginated list of available books."""
 
     books = Paginator(
-        Book.objects.select_related("seller").all(),
+        Book.objects.available().select_related("seller"),
         BOOKS_PER_PAGE,
     ).get_page(request.GET.get("page"))
 
@@ -55,7 +55,7 @@ def book_search(request):
     results = Book.objects.none()
 
     if query:
-        results = Book.objects.filter(
+        results = Book.objects.available().filter(
             Q(title__icontains=query)
             | Q(author__icontains=query)
         ).select_related("seller")
@@ -83,6 +83,24 @@ def book_search(request):
             "books": books,
             "query": query,
         },
+    )
+
+
+@role_required("SELLER")
+def my_listings(request):
+    """List the logged-in seller's own books with sold status and date."""
+
+    # Scoped to the logged-in seller; no seller id is read from the client.
+    listings = (
+        Book.objects.filter(seller=request.user)
+        .with_sold_date()
+        .order_by("title", "id")
+    )
+
+    return render(
+        request,
+        "books/my_listings.html",
+        {"listings": listings},
     )
 
 

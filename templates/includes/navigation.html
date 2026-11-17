@@ -24,6 +24,7 @@
                     <a href="{% url 'cart:view_cart' %}">My Cart</a>
                     <a href="{% url 'orders:history' %}">My Orders</a>
                 {% elif user.role == "SELLER" %}
+                    <a href="{% url 'books:my_listings' %}">My Listings</a>
                     <a href="{% url 'books:add' %}">Add a Book Listing</a>
                 {% endif %}
 

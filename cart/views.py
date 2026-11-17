@@ -30,6 +30,10 @@ def add_to_cart(request, book_id):
 
     book = get_object_or_404(Book, pk=book_id)
 
+    if book.is_sold:
+        messages.error(request, "This book has already been sold.")
+        return redirect("cart:view_cart")
+
     item = CartItem.objects.filter(
         customer=request.user,
         book=book,
