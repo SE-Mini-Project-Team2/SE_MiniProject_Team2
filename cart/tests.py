@@ -129,3 +129,88 @@ class ShoppingCartTests(TestCase):
             book=self.book,
         )
         self.assertEqual(item.quantity, 10)
+
+
+class AddToCartStaysOnPageTests(TestCase):
+    """Adding a book keeps the customer on the page they came from."""
+
+    def setUp(self):
+        self.customer = User.objects.create_user(
+            username="stay1",
+            email="stay1@example.com",
+            password="TestPass123!Secure",
+            role="CUSTOMER",
+        )
+        seller = User.objects.create_user(
+            username="stay-seller",
+            email="stay-seller@example.com",
+            password="TestPass789!Secure",
+            role="SELLER",
+        )
+        self.book = Book.objects.create(
+            title="Stay Book",
+            author="Test Author",
+            price="100.00",
+            seller=seller,
+        )
+        self.url = reverse("cart:add_to_cart", args=[self.book.id])
+        self.client.force_login(self.customer)
+
+    def test_stays_on_browse_page_with_page_number(self):
+        response = self.client.post(
+            self.url, HTTP_REFERER="http://testserver/books/?page=2"
+        )
+
+        self.assertRedirects(
+            response, "/books/?page=2", fetch_redirect_response=False
+        )
+        self.assertEqual(CartItem.objects.count(), 1)
+
+    def test_stays_on_search_results_with_query(self):
+        response = self.client.post(
+            self.url, HTTP_REFERER="http://testserver/books/search/?q=stay"
+        )
+
+        self.assertRedirects(
+            response, "/books/search/?q=stay", fetch_redirect_response=False
+        )
+
+    def test_confirmation_message_shows_on_browse_page(self):
+        response = self.client.post(
+            self.url,
+            HTTP_REFERER="http://testserver/books/",
+            follow=True,
+        )
+
+        self.assertContains(response, "Book added to your cart.")
+        self.assertEqual(response.redirect_chain[-1][0], "/books/")
+
+    def test_quantity_limit_message_also_stays_on_page(self):
+        CartItem.objects.create(
+            customer=self.customer, book=self.book, quantity=10
+        )
+
+        response = self.client.post(
+            self.url, HTTP_REFERER="http://testserver/books/"
+        )
+
+        self.assertRedirects(
+            response, "/books/", fetch_redirect_response=False
+        )
+        self.assertEqual(CartItem.objects.get().quantity, 10)
+
+    def test_external_referrer_is_ignored(self):
+        response = self.client.post(
+            self.url, HTTP_REFERER="https://evil.example/steal"
+        )
+
+        self.assertRedirects(
+            response, reverse("cart:view_cart"), fetch_redirect_response=False
+        )
+
+    def test_missing_referrer_falls_back_to_cart(self):
+        response = self.client.post(self.url)
+
+        self.assertRedirects(
+            response, reverse("cart:view_cart"), fetch_redirect_response=False
+        )
